@@ -1,5 +1,6 @@
 import { initializeApp } from "firebase/app";
 import { getAuth, signInWithPopup, GoogleAuthProvider, signOut, onAuthStateChanged } from "firebase/auth";
+import { getDatabase, ref, get } from "firebase/database";
 
 const firebaseConfig = {
   apiKey: process.env.REACT_APP_FIREBASE_API_KEY,
@@ -11,24 +12,36 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const provider = new GoogleAuthProvider();
+const database = getDatabase(app);
 
-export const login = async () => {
-  return signInWithPopup(auth, provider)
-    .then((result) => {
-      const user = result.user;
-      return user;
-    })
-    .catch((error) => {
-      console.error(error);
-    });
+// 자동 로그인 해제 [ 로그인 시 매번 계정 선택 처리 ]
+provider.setCustomParameters({
+  prompt: "select_account",
+});
+
+export const login = () => {
+  signInWithPopup(auth, provider).catch(console.error);
 };
 
-export const logout = async () => {
-  return signOut(auth).then(() => null);
+export const logout = () => {
+  signOut(auth);
 };
 
 export const onUserStateChange = (callback) => {
-  onAuthStateChanged(auth, (user) => {
-    callback(user);
+  onAuthStateChanged(auth, async (user) => {
+    const updateUser = user ? await adminUser(user) : null;
+    callback(updateUser);
   });
+};
+
+const adminUser = async (user) => {
+  return get(ref(database, "admins")) //
+    .then((snapshot) => {
+      if (snapshot.exists()) {
+        const admins = snapshot.val();
+        const isAdmin = admins.includes(user.uid);
+        return { ...user, isAdmin };
+      }
+      return user;
+    });
 };
