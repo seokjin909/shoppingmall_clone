@@ -7,12 +7,12 @@ const queryClient = new QueryClient();
 function App() {
   return (
     <>
-      <AuthContextProvider>
-        <QueryClientProvider client={queryClient}>
+      <QueryClientProvider client={queryClient}>
+        <AuthContextProvider>
           <Navbar />
           <Outlet />
-        </QueryClientProvider>
-      </AuthContextProvider>
+        </AuthContextProvider>
+      </QueryClientProvider>
     </>
   );
 }
