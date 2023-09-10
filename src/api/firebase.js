@@ -1,6 +1,6 @@
 import { initializeApp } from "firebase/app";
 import { getAuth, signInWithPopup, GoogleAuthProvider, signOut, onAuthStateChanged } from "firebase/auth";
-import { getDatabase, ref, get, set } from "firebase/database";
+import { getDatabase, ref, get, set, remove } from "firebase/database";
 import { v4 as uuid } from "uuid";
 
 const firebaseConfig = {
@@ -35,6 +35,7 @@ export const onUserStateChange = (callback) => {
   });
 };
 
+// 관리자 계정 조회
 const adminUser = async (user) => {
   return get(ref(database, "admins")) //
     .then((snapshot) => {
@@ -47,6 +48,7 @@ const adminUser = async (user) => {
     });
 };
 
+// 데이터 추가하기
 export const addNewProduct = async (product, image) => {
   const id = uuid();
   return set(ref(database, `products/${id}`), {
@@ -58,13 +60,29 @@ export const addNewProduct = async (product, image) => {
   });
 };
 
+// 데이터 불러오기
 export const getProducts = async () => {
   return get(ref(database, "products")) //
     .then((snapshot) => {
       if (snapshot.exists()) {
-        console.log(Object.values(snapshot.val()));
         return Object.values(snapshot.val());
       }
       return [];
     });
+};
+
+export const getCart = async (userId) => {
+  return get(ref(database, `carts/${userId}`)) //
+    .then((snapshot) => {
+      const itmes = snapshot.val() || {};
+      return Object.values(itmes);
+    });
+};
+
+export const addOrUpdateToCart = async (userId, product) => {
+  return set(ref(database, `carts/${userId}/${product.id}`), product);
+};
+
+export const removeFromCart = async (userId, productId) => {
+  return remove(ref(database, `carts/${userId}/${productId}`));
 };
